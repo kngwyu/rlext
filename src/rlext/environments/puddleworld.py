@@ -8,8 +8,7 @@ from gym.utils import seeding
 
 
 class ContinuousPuddleWorld(gym.Env):
-    ACT_MIN: float = -0.1
-    ACT_MAX: float = 0.1
+    ACTION_SCALE: float = 0.1
     PUDDLES: np.ndarray = np.array(
         [[[0.1, 0.75], [0.45, 0.75]], [[0.45, 0.4], [0.45, 0.8]]]
     )
@@ -20,9 +19,7 @@ class ContinuousPuddleWorld(gym.Env):
         self._noise = noise
         self._state = np.empty(2)
 
-        self.action_space = gym.spaces.Box(
-            np.ones(2) * self.ACT_MIN, np.ones(2) * self.ACT_MAX
-        )
+        self.action_space = gym.spaces.Box(np.ones(2) * -np.inf, np.ones(2) * np.inf)
         self.observation_space = gym.spaces.Box(np.zeros(2), np.ones(2))
         self.seed()
 
@@ -46,7 +43,7 @@ class ContinuousPuddleWorld(gym.Env):
         return [seed]
 
     def step(self, action: np.ndarray) -> t.Tuple[np.ndarray, float, bool, dict]:
-        action = np.clip(action, self.ACT_MIN, self.ACT_MAX)
+        action = np.tanh(action) * self.ACTION_SCALE
         ns = self._state + action + self.np_random.randn() * self._noise
         # make sure we stay inside the [0,1]^2 region
         ns = np.minimum(ns, 1.0)
