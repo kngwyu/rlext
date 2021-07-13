@@ -59,3 +59,18 @@ for i, param in enumerate(_CONTINUOUS_SWINGUP_PARAMS):
         kwargs=param,
         reward_threshold=800,
     )
+
+
+gym.envs.register(
+    id="PuddleWorld-v0",
+    entry_point="rlext.environments.puddleworld:PuddleWorld",
+    max_episode_steps=1000,
+    reward_threshold=-1.0,
+)
+
+gym.envs.register(
+    id="ContinuousPuddleWorld-v0",
+    entry_point="rlext.environments.puddleworld:ContinuousPuddleWorld",
+    max_episode_steps=1000,
+    reward_threshold=-1.0,
+)
