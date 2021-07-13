@@ -1,6 +1,12 @@
 import gym
 
-SWINGUP_PARAMS = [
+_EASY_PARAMS = dict(
+    height_threshold=0.0,
+    theta_dot_threshold=1.5,
+    x_reward_threshold=1.5,
+)
+
+_SWINGUP_PARAMS = [
     # Same as bsuite
     dict(start_position="bottom", allow_noop=True),
     # Difficult
@@ -8,19 +14,15 @@ SWINGUP_PARAMS = [
     # No movecost
     dict(start_position="bottom", allow_noop=False),
     # Easy
-    dict(
-        start_position="bottom",
-        allow_noop=False,
-        height_threshold=0.0,
-        theta_dot_threshold=1.5,
-        x_reward_threshold=1.5,
-    ),
+    dict(start_position="bottom", allow_noop=False, **_EASY_PARAMS),
     # Arbitary start
     dict(start_position="arbitary", allow_noop=False),
+    # Arbitary and easy
+    dict(start_position="arbitary", allow_noop=False, **_EASY_PARAMS),
 ]
 
 
-for i, param in enumerate(SWINGUP_PARAMS):
+for i, param in enumerate(_SWINGUP_PARAMS):
     gym.envs.register(
         id=f"CartPoleSwingUp-v{i}",
         entry_point="rlext.environments.cartpole:CartPoleSwingUp",
@@ -30,8 +32,8 @@ for i, param in enumerate(SWINGUP_PARAMS):
     )
 
 
-CONTINUOUS_SWINGUP_PARAMS = [
-    # Normal
+_CONTINUOUS_SWINGUP_PARAMS = [
+    # xsNormal
     dict(start_position="bottom"),
     # Difficult
     dict(start_position="bottom", height_threshold=0.9),
@@ -44,10 +46,12 @@ CONTINUOUS_SWINGUP_PARAMS = [
     ),
     # Arbitary start
     dict(start_position="arbitary"),
+    # Arbitary and easy
+    dict(start_position="arbitary", **_EASY_PARAMS),
 ]
 
 
-for i, param in enumerate(CONTINUOUS_SWINGUP_PARAMS):
+for i, param in enumerate(_CONTINUOUS_SWINGUP_PARAMS):
     gym.envs.register(
         id=f"CartPoleSwingUpContinuous-v{i}",
         entry_point="rlext.environments.cartpole:CartPoleSwingUpContinuous",
