@@ -9,16 +9,18 @@ _EASY_PARAMS = dict(
 _SWINGUP_PARAMS = [
     # Same as bsuite
     dict(start_position="bottom", allow_noop=True),
-    # Difficult
+    # Bottom/Difficult
     dict(start_position="bottom", allow_noop=True, height_threshold=0.9),
-    # No movecost
+    # Bottom/No movecost
     dict(start_position="bottom", allow_noop=False),
-    # Easy
+    # Bottom/Easy
     dict(start_position="bottom", allow_noop=False, **_EASY_PARAMS),
-    # Arbitary start
+    # Arbitary
     dict(start_position="arbitary", allow_noop=False),
-    # Arbitary and easy
+    # Arbitary/Easy
     dict(start_position="arbitary", allow_noop=False, **_EASY_PARAMS),
+    # Up
+    dict(start_position="up", allow_noop=False),
 ]
 
 
@@ -33,21 +35,23 @@ for i, param in enumerate(_SWINGUP_PARAMS):
 
 
 _CONTINUOUS_SWINGUP_PARAMS = [
-    # xsNormal
+    # Bottom/same as bsuite
     dict(start_position="bottom"),
-    # Difficult
+    # Bottom/Difficult
     dict(start_position="bottom", height_threshold=0.9),
-    # Easy
+    # Bottom/Easy
     dict(
         start_position="bottom",
         height_threshold=0.0,
         theta_dot_threshold=1.5,
         x_reward_threshold=1.5,
     ),
-    # Arbitary start
+    # Arbitary
     dict(start_position="arbitary"),
-    # Arbitary and easy
+    # Arbitary/Easy
     dict(start_position="arbitary", **_EASY_PARAMS),
+    # Up
+    dict(start_position="up"),
 ]
 
 

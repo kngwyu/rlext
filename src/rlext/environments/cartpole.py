@@ -70,7 +70,7 @@ class _SwingUpCommon:
 
 
 class CartPoleSwingUp(CartPoleEnv, _SwingUpCommon):
-    START_POSITIONS = ["arbitary", "bottom"]
+    START_POSITIONS = ["arbitary", "bottom", "up"]
     ACT_TO_FORCE = [-1.0, 1.0, 0.0]
 
     def __init__(
@@ -113,14 +113,14 @@ class CartPoleSwingUp(CartPoleEnv, _SwingUpCommon):
         self.state = self.np_random.uniform(-0.05, 0.05, size=(4,))
         if self.start_position == 0:
             self.state[2] = self.np_random.uniform(-np.pi, np.pi)
-        else:
+        elif self.start_position == 1:
             self.state[2] += np.pi
         self.steps_beyond_done = None
         return self._obs()
 
 
 class CartPoleSwingUpContinuous(CartPoleEnv, _SwingUpCommon):
-    START_POSITIONS = ["arbitary", "bottom"]
+    START_POSITIONS = ["arbitary", "bottom", "up"]
 
     def __init__(
         self,
@@ -157,7 +157,7 @@ class CartPoleSwingUpContinuous(CartPoleEnv, _SwingUpCommon):
         self.state = self.np_random.uniform(-0.05, 0.05, size=(4,))
         if self.start_position == 0:
             self.state[2] = self.np_random.uniform(-np.pi, np.pi)
-        else:
+        elif self.start_position == 1:
             self.state[2] += np.pi
         self.steps_beyond_done = None
         return self._obs()
