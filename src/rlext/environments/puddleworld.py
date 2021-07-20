@@ -9,18 +9,39 @@ from gym.utils import seeding
 
 class ContinuousPuddleWorld(gym.Env):
     ACTION_SCALE: float = 0.1
-    PUDDLES: np.ndarray = np.array(
+    DEFAULT_PUDDLES: np.ndarray = np.array(
         [[[0.1, 0.75], [0.45, 0.75]], [[0.45, 0.4], [0.45, 0.8]]]
     )
     REWARD_UNIT: float = 0.01
     SCREEN_SIZE: int = 400
 
-    def __init__(self, noise: float = 0.01) -> None:
+    def __init__(
+        self,
+        noise: float = 0.01,
+        puddles: np.ndarray = DEFAULT_PUDDLES,
+        start_positions: t.Optional[np.ndarray] = None,
+    ) -> None:
         self._noise = noise
         self._state = np.empty(2)
+        assert (
+            puddles.ndim == 3 and puddles.shape[-1] == 2
+        ), f"Invalid shape as puddle: {puddle.shape}"
 
-        self.action_space = gym.spaces.Box(np.ones(2) * -np.inf, np.ones(2) * np.inf)
-        self.observation_space = gym.spaces.Box(np.zeros(2), np.ones(2))
+        self._puddles = puddles
+        if start_positions is not None:
+            assert (
+                start_positions.ndim == 2 and start_positions.shape[1] == 2
+            ), f"Invalid shape as start positions: {start_positions.shape}"
+        self._start_positions = start_positions
+
+        self.action_space = gym.spaces.Box(
+            -np.ones(2, dtype=np.float32) * self.ACTION_SCALE,
+            np.ones(2, dtype=np.float32) * self.ACTION_SCALE,
+        )
+        self.observation_space = gym.spaces.Box(
+            np.zeros(2, dtype=np.float32),
+            np.ones(2, dtype=np.float32),
+        )
         self.seed()
 
         # Some visualization stuffs
@@ -33,9 +54,14 @@ class ContinuousPuddleWorld(gym.Env):
         self._state_mark = None
 
     def reset(self) -> np.ndarray:
-        self._state = self.np_random.rand(2)
-        while self._is_terminal():
+        if self._start_positions is None:
             self._state = self.np_random.rand(2)
+            while self._is_terminal():
+                self._state = self.np_random.rand(2)
+        else:
+            n_start_positions = len(self._start_positions)
+            idx = self.np_random.choice(np.arange(n_start_positions))
+            self._state = self._start_positions[idx].copy()
         return self._state.copy()
 
     def seed(self, seed: t.Optional[int] = None) -> t.List[int]:
@@ -43,7 +69,7 @@ class ContinuousPuddleWorld(gym.Env):
         return [seed]
 
     def step(self, action: np.ndarray) -> t.Tuple[np.ndarray, float, bool, dict]:
-        action = np.tanh(action) * self.ACTION_SCALE
+        action = np.clip(action, -self.ACTION_SCALE, self.ACTION_SCALE).reshape(2)
         ns = self._state + action + self.np_random.randn() * self._noise
         # make sure we stay inside the [0,1]^2 region
         ns = np.minimum(ns, 1.0)
@@ -90,12 +116,12 @@ class ContinuousPuddleWorld(gym.Env):
             return self.REWARD_UNIT * 10  # goal state reached
         reward = -self.REWARD_UNIT
         # compute puddle influence
-        d = self.PUDDLES[:, 1, :] - self.PUDDLES[:, 0, :]
+        d = self._puddles[:, 1, :] - self._puddles[:, 0, :]
         denom = (d ** 2).sum(axis=1)
-        g = ((s - self.PUDDLES[:, 0, :]) * d).sum(axis=1) / denom
+        g = ((s - self._puddles[:, 0, :]) * d).sum(axis=1) / denom
         g = np.minimum(g, 1)
         g = np.maximum(g, 0)
-        dists = np.sqrt(((self.PUDDLES[:, 0, :] + g * d - s) ** 2).sum(axis=1))
+        dists = np.sqrt(((self._puddles[:, 0, :] + g * d - s) ** 2).sum(axis=1))
         dists = dists[dists < 0.1]
         if len(dists) > 0:
             reward -= self.REWARD_UNIT * 10 * (0.1 - dists[dists < 0.1]).max()

@@ -1,3 +1,4 @@
+import numpy as np
 import gym
 
 _EASY_PARAMS = dict(
@@ -77,4 +78,15 @@ gym.envs.register(
     entry_point="rlext.environments.puddleworld:ContinuousPuddleWorld",
     max_episode_steps=1000,
     reward_threshold=-1.0,
+)
+
+gym.envs.register(
+    id="ContinuousPuddleWorld-v100",
+    entry_point="rlext.environments.puddleworld:ContinuousPuddleWorld",
+    max_episode_steps=1000,
+    reward_threshold=-1.0,
+    kwargs={
+        "puddles": np.array([[[0.0, 0.0], [0.1, 0.0]]]),
+        "start_positions": np.array([[0.5, 0.5]]),
+    },
 )
