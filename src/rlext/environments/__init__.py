@@ -20,8 +20,6 @@ _SWINGUP_PARAMS = [
     dict(start_position="arbitary", allow_noop=False),
     # Arbitary/Easy
     dict(start_position="arbitary", allow_noop=False, **_EASY_PARAMS),
-    # Up
-    dict(start_position="up", allow_noop=False),
 ]
 
 
@@ -51,8 +49,6 @@ _CONTINUOUS_SWINGUP_PARAMS = [
     dict(start_position="arbitary"),
     # Arbitary/Easy
     dict(start_position="arbitary", **_EASY_PARAMS),
-    # Up
-    dict(start_position="up"),
 ]
 
 
@@ -64,6 +60,20 @@ for i, param in enumerate(_CONTINUOUS_SWINGUP_PARAMS):
         kwargs=param,
         reward_threshold=800,
     )
+
+gym.envs.register(
+    id="CartPoleContinuous-v0",
+    entry_point="rlext.environments.cartpole:CartPoleContinuous",
+    max_episode_steps=200,
+    reward_threshold=195.0,
+)
+
+gym.envs.register(
+    id="CartPoleContinuous-v1",
+    entry_point="rlext.environments.cartpole:CartPoleContinuous",
+    max_episode_steps=500,
+    reward_threshold=475.0,
+)
 
 
 gym.envs.register(

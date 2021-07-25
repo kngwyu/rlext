@@ -70,7 +70,7 @@ class _SwingUpCommon:
 
 
 class CartPoleSwingUp(CartPoleEnv, _SwingUpCommon):
-    START_POSITIONS = ["arbitary", "bottom", "up"]
+    START_POSITIONS = ["arbitary", "bottom"]
     ACT_TO_FORCE = [-1.0, 1.0, 0.0]
 
     def __init__(
@@ -113,14 +113,14 @@ class CartPoleSwingUp(CartPoleEnv, _SwingUpCommon):
         self.state = self.np_random.uniform(-0.05, 0.05, size=(4,))
         if self.start_position == 0:
             self.state[2] = self.np_random.uniform(-np.pi, np.pi)
-        elif self.start_position == 1:
+        else:
             self.state[2] += np.pi
         self.steps_beyond_done = None
         return self._obs()
 
 
 class CartPoleSwingUpContinuous(CartPoleEnv, _SwingUpCommon):
-    START_POSITIONS = ["arbitary", "bottom", "up"]
+    START_POSITIONS = ["arbitary", "bottom"]
 
     def __init__(
         self,
@@ -157,7 +157,72 @@ class CartPoleSwingUpContinuous(CartPoleEnv, _SwingUpCommon):
         self.state = self.np_random.uniform(-0.05, 0.05, size=(4,))
         if self.start_position == 0:
             self.state[2] = self.np_random.uniform(-np.pi, np.pi)
-        elif self.start_position == 1:
+        else:
             self.state[2] += np.pi
+        self.steps_beyond_done = None
+        return self._obs()
+
+
+class CartPoleContinuous(CartPoleEnv, _SwingUpCommon):
+    def __init__(
+        self,
+        height_threshold: float = 0.5,
+        theta_dot_threshold: float = 1.0,
+        x_reward_threshold: float = 1.0,
+        x_threshold: float = 2.4,
+        move_cost: float = 0.1,
+        max_force: float = 1.0,
+        min_force: float = -1.0,
+        force_mag: float = 10.0,
+    ) -> None:
+        super().__init__()
+        self.x_threshold = x_threshold
+        self._height_threshold = height_threshold
+        self._theta_dot_threshold = theta_dot_threshold
+        self._x_reward_threshold = x_reward_threshold
+        self._move_cost = move_cost
+        obs_high = np.array([1.0, F32_MAX, 1.0, 1.0, F32_MAX])
+        self.observation_space = spaces.Box(-obs_high, obs_high, dtype=np.float32)
+        self.action_space = spaces.Box(np.array([min_force]), np.array([max_force]))
+        self._force_clipper = min_force, max_force
+        self.force_mag = 10.0
+
+    def _step(self, force: float) -> t.Tuple[float, bool]:
+        x, x_dot, theta, theta_dot = self._forward(force)
+        done = bool(
+            x < -self.x_threshold
+            or x > self.x_threshold
+            or theta < -self.theta_threshold_radians
+            or theta > self.theta_threshold_radians
+        )
+
+        def _reward() -> float:
+            is_upright = np.cos(theta) > self._height_threshold
+            is_upright &= np.abs(theta_dot) < self._theta_dot_threshold
+            is_upright &= np.abs(x) < self._x_reward_threshold
+            return 1.0 if is_upright else 0.0 - self._move_cost
+
+        if not done:
+            reward = _reward()
+        elif self.steps_beyond_done is None:
+            # Pole just fell!
+            self.steps_beyond_done = 0
+            reward = _reward()
+        else:
+            if self.steps_beyond_done == 0:
+                logger.warn("You are calling 'step()' after the episode ending.")
+            self.steps_beyond_done += 1
+            reward = 0.0
+
+        self.state = x, x_dot, theta, theta_dot
+        return reward, done
+
+    def step(self, force: float) -> t.Tuple[np.ndarray, float, bool, dict]:
+        force = np.clip(force, *self._force_clipper)
+        reward, done = self._step(force * self.force_mag)
+        return self._obs(), reward, done, {}
+
+    def reset(self) -> np.ndarray:
+        self.state = self.np_random.uniform(-0.05, 0.05, size=(4,))
         self.steps_beyond_done = None
         return self._obs()
