@@ -6,7 +6,7 @@ This library only depends on `gym` and some standard scientific Python libraries
 
 ## CAUTION
 Though I'm using this module for my own research, it is still highly work in progress.
-This project is open-sourced just for sharing codes to some of my friends.
+This project is open-sourced just for sharing codes with some of my friends.
 
 ## Current components
 - `environments`
