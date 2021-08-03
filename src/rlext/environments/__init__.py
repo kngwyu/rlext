@@ -90,6 +90,7 @@ gym.envs.register(
     reward_threshold=-1.0,
 )
 
+# Super easy, for debugging
 gym.envs.register(
     id="ContinuousPuddleWorld-v100",
     entry_point="rlext.environments.puddleworld:ContinuousPuddleWorld",
