@@ -45,6 +45,7 @@ class Record:
         self._save_path = save_path
         self._save_interval = save_interval
         self._save_fn = save_fn
+        self._last_summarized_length = defaultdict(lambda: 0)
         atexit.register(self._dump)
 
     def submit(self, d: t.Dict[str, t.Any]) -> int:
@@ -103,6 +104,10 @@ class Record:
 
         for value, df in groupby_iter:
             indices_df = df[indices]
+            current_length = len(indices_df)
+            if self._last_summarized_length[value] == current_length:
+                continue
+            self._last_summarized_length[value] = current_length
             click.secho(
                 f"============ {groupby}: {value} =============",
                 bg=color,
