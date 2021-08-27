@@ -8,6 +8,8 @@ from pathlib import Path
 import click
 import pandas as pd
 
+_SAVE_FN = t.Callable[[pd.DataFrame, Path], None]
+
 
 class _StdoutConfig(t.NamedTuple):
     interval: int
@@ -16,13 +18,35 @@ class _StdoutConfig(t.NamedTuple):
     groupby: str
 
 
+def _save_csv(df: pd.DataFrame, path: Path) -> None:
+    if path.exists():
+        header = False
+        mode = "a"
+    else:
+        header = True
+        mode = "w"
+    df.to_csv(path.as_posix(), mode=mode, header=header, index=False)
+
+
 def _save_jsonl(df: pd.DataFrame, path: Path) -> None:
     with path.open(mode="a") as f:
         df.to_json(f, orient="records", lines=True)
 
 
+def _save_parquet(df: pd.DataFrame, path: Path) -> None:
+    if path.exists():
+        df = pd.read_parquet(path).append(df)
+    df.to_parquet(path)
+
+
 class Record:
     """Available colors: black, red, green, yellow, blue, magenta, cyan, white"""
+
+    _SAVE_FUNCTIONS = {
+        "csv": _save_csv,
+        "jsonl": _save_jsonl,
+        "parquet": _save_parquet,
+    }
 
     def __init__(
         self,
@@ -33,7 +57,7 @@ class Record:
         stdout_groupby: t.Optional[str] = None,
         save_path: t.Optional[Path] = None,
         save_interval: t.Optional[int] = None,
-        save_fn: t.Callable[[pd.DataFrame, Path], None] = _save_jsonl,
+        save_fn: t.Union[str, _SAVE_FN] = "jsonl",
     ) -> None:
         self._records = defaultdict(list)
         self._stdout_config = _StdoutConfig(
@@ -44,7 +68,7 @@ class Record:
         )
         self._save_path = save_path
         self._save_interval = save_interval
-        self._save_fn = save_fn
+        self._save_fn = self._SAVE_FUNCTIONS.get(save_fn, save_fn)
         self._last_summarized_length = defaultdict(lambda: 0)
         atexit.register(self._dump)
 
